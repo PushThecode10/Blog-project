@@ -1,10 +1,14 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { useDispatch } from "react-redux";  // ✅ import Redux
+import { login } from "../../Features/auth/authSlice.js"; // ✅ import login action
 import API from "../../axios.js";
 
 const Login = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch(); // ✅ get dispatch function
+
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,19 +17,23 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // ✅ Call user login API
+      // ✅ Call your backend login API
       const res = await API.post("/auth/login", { email, password });
 
       if (res.data.success) {
         // ✅ Save tokens
         localStorage.setItem("accessToken", res.data.accessToken);
         localStorage.setItem("refreshToken", res.data.refreshToken);
+        localStorage.setItem("role", res.data.role || "user");
 
-        // ✅ Show success message
+        // ✅ Dispatch Redux login action
+        dispatch(login({ email })); // update Redux auth state
+
+        // ✅ Optional success message
         setMessage("Login successful!");
 
         // ✅ Navigate to user home page
-        navigate("/home");
+        navigate("/UserHomePage");
       } else {
         setMessage(res.data.message || "Login failed");
       }

@@ -1,28 +1,23 @@
-// Logout.jsx
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { logout } from "../Features/auth/authSlice.js";
 
 const Logout = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const role = localStorage.getItem("role");
 
   useEffect(() => {
-    // ✅ Read role BEFORE clearing localStorage
+    dispatch(logout()); // update redux state
 
-    // Clear all authentication data
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("role");
 
-    // Redirect based on role
-    console.log(role);
-    
-    if (role === "admin") {
-      navigate("/adminLogin"); // admin login page
-    } else {
-      navigate("/"); // normal user home page
-    }
-  }, [navigate]);
+    if (role === "admin") navigate("/adminLogin");
+    else navigate("/");
+  }, [dispatch, navigate, role]);
 
   return <div>Logging out...</div>;
 };
