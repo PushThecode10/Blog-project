@@ -191,3 +191,22 @@ export const logoutUser = async (req, res) => {
      throw new Error({ success: false, message: error.message});
   }
 };
+
+// controllers/authController.js
+export const getMe = async (req, res) => {
+  try {
+    // `protect` middleware should attach `req.user`
+    const user = req.user;
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

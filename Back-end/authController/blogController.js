@@ -1,4 +1,5 @@
 import Blog from "../models/blogProduct.js";
+import LikeBlog from "../models/likeModel.js";
 import {
   uploadToCloudinary,
   deleteFromCloudinary,
@@ -116,57 +117,114 @@ export const getAllBlogs = async (req, res) => {
     res.status(500).json({ message: error.message });
   }
 };
-
 export const getBlogById = async (req, res) => {
   try {
     const { id } = req.params;
+
     const blog = await Blog.findById(id)
       .populate("author", "name email")
       .populate("category", "name")
-      .populate({
-        path: "comments",
-        populate: { path: "user", select: "name email" },
-      });
 
     if (!blog) return res.status(404).json({ message: "Blog not found" });
     if (!blog.isPublished && (!req.user || req.user.role !== "admin")) {
-      return res
-        .status(403)
-        .json({ message: "This blog is not published yet" });
+      return res.status(403).json({ message: "This blog is not published yet" });
     }
 
     res.status(200).json({ blog });
   } catch (error) {
-    throw new Error({ success: false, message: error.message });
+    console.error("Error fetching blog:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
 export const likeBlog = async (req, res) => {
+  const { id } = req.params; // Get blog ID from URL params
+  const userId = req.user._id; // Get user ID from the authenticated user
+
   try {
-    const { id } = req.params;
-    const userId = req.user._id;
+    // Check if the blog exists
     const blog = await Blog.findById(id);
-    if (!blog) return res.status(404).json({ message: "Blog not found" });
-    const likedIndex = blog.likes.indexOf(userId);
-    if (likedIndex === -1) {
-      blog.likes.push(userId);
-      await blog.save();
-      return res.status(200).json({ message: "Blog liked" });
+    if (!blog) {
+      return res.status(404).json({ message: "Blog not found" });
     }
-    blog.likes.splice(likedIndex, 1);
-    await blog.save();
-    res.status(200).json({ message: "Blog unliked" });
+
+    // Check if the user has already liked this blog
+    const existingLike = await LikeBlog.findOne({ User: userId, blog: id });
+    if (existingLike) {
+      // If already liked, unlike the blog
+      await LikeBlog.deleteOne({ User: userId, blog: id });
+      return res.status(200).json({ message: "Blog unliked" });
+    }
+
+    // Otherwise, create a new like for the blog
+    const newLike = new LikeBlog({
+      User: userId,
+      blog: id,
+    });
+
+    await newLike.save();
+
+    return res.status(200).json({ message: "Blog liked successfully" });
   } catch (error) {
-    throw new Error({ success: false, message: error.message });
+    console.error(error);
+    res.status(500).json({ message: "Server error, please try again later" });
   }
 };
-export const getBlogLikes = async (req, res) => {
+
+
+export const getLikedBlogs = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    // Fetch all liked blogs for the user from the LikeBlog model
+    const likedBlogs = await LikeBlog.find({ User: userId }).populate("blog");
+
+    if (!likedBlogs.length) {
+      return res.status(200).json({ likedBlogs: [] }); // ✅ Return empty array instead of 404
+    }
+
+    // Extract the blogs from the populated 'blog' field
+    const blogs = likedBlogs.map(like => like.blog);
+
+    // ✅ Changed 'blogs' to 'likedBlogs' to match frontend
+    res.status(200).json({ likedBlogs: blogs });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Failed to load liked blogs" });
+  }
+};
+
+// Unlike a blog
+export const unlikeBlog = async (req, res) => {
   try {
     const { id } = req.params;
-    const blog = await Blog.findById(id).populate("likes", "name email");
-    if (!blog) return res.status(404).json({ message: "Blog not found" });
-    res.status(200).json({ likes: blog.likes, totalLikes: blog.likes.length });
+    const userId = req.user._id; // Assuming you have user from auth middleware
+
+    // Find the blog
+    const blog = await Blog.findById(id);
+    
+    if (!blog) {
+      return res.status(404).json({ message: '❌ Blog not found' });
+    }
+
+    // Check if user has liked the blog
+    const hasLiked = blog.likes.includes(userId);
+    
+    if (!hasLiked) {
+      return res.status(400).json({ message: '⚠️ You haven\'t liked this blog yet' });
+    }
+
+    // Remove user from likes array
+    blog.likes = blog.likes.filter(like => like.toString() !== userId.toString());
+    await blog.save();
+
+    res.status(200).json({ 
+      message: '✅ Blog unliked successfully',
+      liked: false,
+      likesCount: blog.likes.length
+    });
   } catch (error) {
-    res.status(500).json({ message: error.message });
+    console.error(error);
+    res.status(500).json({ message: '❌ Server error' });
   }
 };

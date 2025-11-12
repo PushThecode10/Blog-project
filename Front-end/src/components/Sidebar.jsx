@@ -81,8 +81,8 @@ const Sidebar = () => {
                Catagories  
               </span>
             </div>
-            {/* unpublished Blogs */}
           </div>
+          {/* unpublished Blogs */}
            <div className="group cursor-pointer">
             <div
             onClick={() => navigate("")} 
@@ -92,6 +92,19 @@ const Sidebar = () => {
               </div>
               <span className="text-white font-semibold group-hover:text-orange-500">
                 Unpublished Blogs
+              </span>
+            </div>
+          </div>
+          {/* Likes Bogs */}
+          <div className="group cursor-pointer">
+            <div 
+            onClick={()=> navigate("")} 
+            className="w-full px-4 py-3 flex items-center space-x-4 rounded-xl bg-gradient-to-r bg-blue-600 hover:bg-white text-white hover:translate-x-2 transition-all duration-300 relative ">
+              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg flex items-center justify-center  group-hover:rotate-6 group-hover:scale-110 transition-all duration-300">
+                <LuNotebook className="text-xl text-black" />
+              </div>
+              <span className="text-white font-semibold group-hover:text-orange-500">
+               Likes Blogs 
               </span>
             </div>
           </div>

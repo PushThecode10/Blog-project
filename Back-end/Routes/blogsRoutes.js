@@ -1,4 +1,3 @@
-// routes/blogRoutes.js
 import express from "express";
 import {
   createBlog,
@@ -7,7 +6,9 @@ import {
   getAllBlogs,
   getBlogById,
   likeBlog,
-} from "../authController/blogController.js"; // ✅ corrected path
+  getLikedBlogs,
+  unlikeBlog,
+} from "../authController/blogController.js";
 import { protect, adminOnly } from "../middleware/authMiddleware.js";
 import upload from "../middleware/uploadMiddleware.js";
 
@@ -15,10 +16,12 @@ const router = express.Router();
 
 // ✅ Public routes
 router.get("/all", getAllBlogs);
-router.get("/:id", getBlogById);
+router.get("/blog/:id", getBlogById);
 
 // ✅ Protected routes (authenticated users)
-router.post("/likes/:id", protect, likeBlog);
+router.post("/like/:id", protect, likeBlog);
+router.get("/liked", protect, getLikedBlogs);
+router.post('/unlike/:id', protect, unlikeBlog);
 
 // ✅ Admin-only routes
 router.post(

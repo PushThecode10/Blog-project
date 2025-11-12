@@ -5,6 +5,7 @@ import {
   loginUser,
   loginAdmin,
   logoutUser,
+  getMe,
 } from "../authController/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 const router = express.Router();
@@ -13,6 +14,7 @@ const router = express.Router();
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/admin/login", loginAdmin); // Separate admin login endpoint
+router.get("/me", protect, getMe)
 
 // Protected routes
 router.post("/logout", protect, logoutUser);

@@ -4,16 +4,17 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";  // ✅ import Redux
 import { login } from "../../Features/auth/authSlice.js"; // ✅ import login action
 import API from "../../axios.js";
+import { useAuth } from "../../Context/AuthProvide.jsx";
 
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch(); // ✅ get dispatch function
-
+const {fetchUser} = useAuth()
+  
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -22,18 +23,20 @@ const Login = () => {
 
       if (res.data.success) {
         // ✅ Save tokens
+         dispatch(login(res.data.user));
         localStorage.setItem("accessToken", res.data.accessToken);
         localStorage.setItem("refreshToken", res.data.refreshToken);
         localStorage.setItem("role", res.data.role || "user");
-
+        
+        await fetchUser()
         // ✅ Dispatch Redux login action
-        dispatch(login({ email })); // update Redux auth state
+         // update Redux auth state
 
         // ✅ Optional success message
         setMessage("Login successful!");
 
         // ✅ Navigate to user home page
-        navigate("/UserHomePage");
+        navigate("/");
       } else {
         setMessage(res.data.message || "Login failed");
       }
