@@ -6,6 +6,7 @@ import {
   loginAdmin,
   logoutUser,
   getMe,
+  refreshAccessToken,
 } from "../authController/authController.js";
 import { protect } from "../middleware/authMiddleware.js";
 const router = express.Router();
@@ -15,6 +16,7 @@ router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/admin/login", loginAdmin); // Separate admin login endpoint
 router.get("/me", protect, getMe)
+router.post("/refresh", refreshAccessToken)
 
 // Protected routes
 router.post("/logout", protect, logoutUser);

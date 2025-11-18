@@ -32,7 +32,9 @@ const Sidebar = () => {
         <nav className="px-4 space-y-2">
           {/* Dashboard */}
           <div className="group cursor-pointer">
-            <div className=" w-full flex items-center space-x-4 px-4 py-3 rounded-xl bg-gradient-to-r bg-blue-600 hover:bg-white text-white font-semibold  rounded-xl hover:translate-x-2 transition-all duration-300 relative">
+            <div
+            onClick={()=>navigate("/adminDashboard")} 
+            className=" w-full flex items-center space-x-4 px-4 py-3 rounded-xl bg-gradient-to-r bg-blue-600 hover:bg-white text-white font-semibold  rounded-xl hover:translate-x-2 transition-all duration-300 relative">
               <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center group-hover:rotate-6 group-hover:scale-110 transition-all duration-300">
                 <MdDashboard className="text-xl text-black" />
               </div>
@@ -51,21 +53,7 @@ const Sidebar = () => {
               </div>
               <span
                className="text-white font-semibold group-hover:text-orange-500">
-                Total Blogs
-              </span>
-            </div>
-          </div>
-
-          {/* Add Blogs */}
-          <div className="group cursor-pointer">
-            <div
-            onClick={() => navigate("/addBlog")} 
-            className="w-full px-4 py-3 flex items-center space-x-4 rounded-xl bg-gradient-to-r bg-blue-600 hover:bg-white text-white hover:translate-x-2 transition-all duration-300 relative ">
-              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg flex items-center justify-center  group-hover:rotate-6 group-hover:scale-110 transition-all duration-300">
-                <FaRegUser  className="text-xl text-black" />
-              </div>
-              <span className="text-white font-semibold group-hover:text-orange-500">
-                Add Blogs
+                Blogs
               </span>
             </div>
           </div>
@@ -78,36 +66,11 @@ const Sidebar = () => {
                 <LuNotebook className="text-xl text-black" />
               </div>
               <span className="text-white font-semibold group-hover:text-orange-500">
-               Catagories  
+               Categories  
               </span>
             </div>
           </div>
-          {/* unpublished Blogs */}
-           <div className="group cursor-pointer">
-            <div
-            onClick={() => navigate("")} 
-            className="w-full px-4 py-3 flex items-center space-x-4 rounded-xl bg-gradient-to-r bg-blue-600 hover:bg-white text-white hover:translate-x-2 transition-all duration-300 relative ">
-              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg flex items-center justify-center  group-hover:rotate-6 group-hover:scale-110 transition-all duration-300">
-                <FaRegUser  className="text-xl text-black" />
-              </div>
-              <span className="text-white font-semibold group-hover:text-orange-500">
-                Unpublished Blogs
-              </span>
-            </div>
-          </div>
-          {/* Likes Bogs */}
-          <div className="group cursor-pointer">
-            <div 
-            onClick={()=> navigate("")} 
-            className="w-full px-4 py-3 flex items-center space-x-4 rounded-xl bg-gradient-to-r bg-blue-600 hover:bg-white text-white hover:translate-x-2 transition-all duration-300 relative ">
-              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg flex items-center justify-center  group-hover:rotate-6 group-hover:scale-110 transition-all duration-300">
-                <LuNotebook className="text-xl text-black" />
-              </div>
-              <span className="text-white font-semibold group-hover:text-orange-500">
-               Likes Blogs 
-              </span>
-            </div>
-          </div>
+       
         </nav>
       </div>
     </div>

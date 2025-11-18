@@ -30,7 +30,6 @@ export const createBlog = async (req, res) => {
     res.status(201).json({ message: "Blog created", blog });
   } catch (error) {
    res.status(500).json({ message: error.message });
-
   }
 };
 
@@ -61,7 +60,7 @@ export const updateBlog = async (req, res) => {
 
     res.status(200).json({ message: "Blog updated", blog });
   } catch (error) {
-    throw new Error({ success: false, message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
@@ -76,20 +75,29 @@ export const deleteBlog = async (req, res) => {
       await deleteFromCloudinary(publicId);
     }
 
+    // Delete all likes associated with this blog
+    await LikeBlog.deleteMany({ blog: id });
+
     await Blog.findByIdAndDelete(id);
 
     res.status(200).json({ message: "Blog deleted" });
   } catch (error) {
-    throw new Error({ success: false, message: error.message });
+    res.status(500).json({ message: error.message });
   }
 };
 
 // Public Controllers
 export const getAllBlogs = async (req, res) => {
   try {
-    const { category, search, page = 1, limit = 10 } = req.query;
+    const { category, search, page = 1, limit = 10, admin } = req.query;
 
-    let query = { isPublished: true };
+    let query = {};
+    
+    // If not admin view, only show published blogs
+    if (admin !== "true") {
+      query.isPublished = true;
+    }
+    
     if (category) query.category = category;
     if (search) {
       query.$or = [
@@ -105,10 +113,21 @@ export const getAllBlogs = async (req, res) => {
       .limit(limit * 1)
       .skip((page - 1) * limit);
 
+    // Get like counts for each blog
+    const blogsWithLikeCounts = await Promise.all(
+      blogs.map(async (blog) => {
+        const likeCount = await LikeBlog.countDocuments({ blog: blog._id });
+        return {
+          ...blog.toObject(),
+          likeCount,
+        };
+      })
+    );
+
     const count = await Blog.countDocuments(query);
 
     res.status(200).json({
-      blogs,
+      blogs: blogsWithLikeCounts,
       totalPages: Math.ceil(count / limit),
       currentPage: Number(page),
       totalBlogs: count,
@@ -120,26 +139,47 @@ export const getAllBlogs = async (req, res) => {
 export const getBlogById = async (req, res) => {
   try {
     const { id } = req.params;
+    const { admin } = req.query; // Add this line
 
     const blog = await Blog.findById(id)
       .populate("author", "name email")
-      .populate("category", "name")
+      .populate("category", "name");
 
     if (!blog) return res.status(404).json({ message: "Blog not found" });
-    if (!blog.isPublished && (!req.user || req.user.role !== "admin")) {
+    
+    // Only check publication status if NOT in admin mode
+    if (admin !== "true" && !blog.isPublished && (!req.user || req.user.role !== "admin")) {
       return res.status(403).json({ message: "This blog is not published yet" });
     }
 
-    res.status(200).json({ blog });
+    // Get like count for this blog
+    const likeCount = await LikeBlog.countDocuments({ blog: id });
+
+    // Check if current user has liked this blog (if authenticated)
+    let isLikedByUser = false;
+    if (req.user) {
+      const existingLike = await LikeBlog.findOne({
+        User: req.user._id,
+        blog: id,
+      });
+      isLikedByUser = !!existingLike;
+    }
+
+    res.status(200).json({
+      blog: {
+        ...blog.toObject(),
+        likeCount,
+        isLikedByUser,
+      },
+    });
   } catch (error) {
     console.error("Error fetching blog:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
-
 export const likeBlog = async (req, res) => {
-  const { id } = req.params; // Get blog ID from URL params
-  const userId = req.user._id; // Get user ID from the authenticated user
+  const { id } = req.params;
+  const userId = req.user._id;
 
   try {
     // Check if the blog exists
@@ -150,10 +190,17 @@ export const likeBlog = async (req, res) => {
 
     // Check if the user has already liked this blog
     const existingLike = await LikeBlog.findOne({ User: userId, blog: id });
+    
     if (existingLike) {
       // If already liked, unlike the blog
       await LikeBlog.deleteOne({ User: userId, blog: id });
-      return res.status(200).json({ message: "Blog unliked" });
+      const newLikeCount = await LikeBlog.countDocuments({ blog: id });
+      
+      return res.status(200).json({
+        message: "Blog unliked",
+        liked: false,
+        likeCount: newLikeCount,
+      });
     }
 
     // Otherwise, create a new like for the blog
@@ -163,68 +210,94 @@ export const likeBlog = async (req, res) => {
     });
 
     await newLike.save();
+    
+    const newLikeCount = await LikeBlog.countDocuments({ blog: id });
 
-    return res.status(200).json({ message: "Blog liked successfully" });
+    return res.status(200).json({
+      message: "Blog liked successfully",
+      liked: true,
+      likeCount: newLikeCount,
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error, please try again later" });
   }
 };
 
-
 export const getLikedBlogs = async (req, res) => {
   try {
     const userId = req.user._id;
 
     // Fetch all liked blogs for the user from the LikeBlog model
-    const likedBlogs = await LikeBlog.find({ User: userId }).populate("blog");
+    const likedBlogs = await LikeBlog.find({ User: userId }).populate({
+      path: "blog",
+      populate: [
+        { path: "category", select: "name" },
+        { path: "author", select: "name email" }
+      ],
+    });
 
     if (!likedBlogs.length) {
-      return res.status(200).json({ likedBlogs: [] }); // ✅ Return empty array instead of 404
+      return res.status(200).json({ likedBlogs: [] });
     }
 
-    // Extract the blogs from the populated 'blog' field
-    const blogs = likedBlogs.map(like => like.blog);
+    // Get like counts for each blog
+    const blogsWithLikeCounts = await Promise.all(
+      likedBlogs.map(async (like) => {
+        if (!like.blog) return null;
+        
+        const likeCount = await LikeBlog.countDocuments({ blog: like.blog._id });
+        return {
+          ...like.blog.toObject(),
+          likeCount,
+          isLikedByUser: true,
+        };
+      })
+    );
 
-    // ✅ Changed 'blogs' to 'likedBlogs' to match frontend
-    res.status(200).json({ likedBlogs: blogs });
+    // Filter out null values (in case some blogs were deleted)
+    const validBlogs = blogsWithLikeCounts.filter((blog) => blog !== null);
+
+    res.status(200).json({ likedBlogs: validBlogs });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Failed to load liked blogs" });
   }
 };
 
-// Unlike a blog
+// Unlike a blog (alternative endpoint)
 export const unlikeBlog = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user._id; // Assuming you have user from auth middleware
+    const userId = req.user._id;
 
     // Find the blog
     const blog = await Blog.findById(id);
     
     if (!blog) {
-      return res.status(404).json({ message: '❌ Blog not found' });
+      return res.status(404).json({ message: "❌ Blog not found" });
     }
 
     // Check if user has liked the blog
-    const hasLiked = blog.likes.includes(userId);
+    const existingLike = await LikeBlog.findOne({ User: userId, blog: id });
     
-    if (!hasLiked) {
-      return res.status(400).json({ message: '⚠️ You haven\'t liked this blog yet' });
+    if (!existingLike) {
+      return res.status(400).json({ message: "⚠️ You haven't liked this blog yet" });
     }
 
-    // Remove user from likes array
-    blog.likes = blog.likes.filter(like => like.toString() !== userId.toString());
-    await blog.save();
+    // Remove the like
+    await LikeBlog.deleteOne({ User: userId, blog: id });
+    
+    // Get updated like count
+    const newLikeCount = await LikeBlog.countDocuments({ blog: id });
 
     res.status(200).json({ 
-      message: '✅ Blog unliked successfully',
+      message: "✅ Blog unliked successfully",
       liked: false,
-      likesCount: blog.likes.length
+      likeCount: newLikeCount
     });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: '❌ Server error' });
+    res.status(500).json({ message: "❌ Server error" });
   }
 };

@@ -1,9 +1,15 @@
 // Features/auth/authSlice.js
 import { createSlice } from "@reduxjs/toolkit";
 
+// 🔥 Read user safely from localStorage
+let savedUser = localStorage.getItem("user");
+
 const initialState = {
   isAuthenticated: !!localStorage.getItem("accessToken"),
-  user: JSON.parse(localStorage.getItem("user")) || null,
+  user:
+    savedUser && savedUser !== "undefined"
+      ? JSON.parse(savedUser)
+      : null,
 };
 
 const authSlice = createSlice({
@@ -13,11 +19,15 @@ const authSlice = createSlice({
     login: (state, action) => {
       state.isAuthenticated = true;
       state.user = action.payload;
+
+      // Always store valid JSON
       localStorage.setItem("user", JSON.stringify(action.payload));
     },
+
     logout: (state) => {
       state.isAuthenticated = false;
       state.user = null;
+
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");
       localStorage.removeItem("role");

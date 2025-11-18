@@ -19,9 +19,9 @@ router.get("/all", getAllBlogs);
 router.get("/blog/:id", getBlogById);
 
 // ✅ Protected routes (authenticated users)
-router.post("/like/:id", protect, likeBlog);
+router.post("/like/:id", protect, likeBlog); // Toggle like/unlike
+router.delete("/unlike/:id", protect, unlikeBlog); // Explicit unlike endpoint
 router.get("/liked", protect, getLikedBlogs);
-router.post('/unlike/:id', protect, unlikeBlog);
 
 // ✅ Admin-only routes
 router.post(
@@ -39,5 +39,6 @@ router.put(
   updateBlog
 );
 router.delete("/delete/:id", protect, adminOnly, deleteBlog);
+router.put("/update/:id", protect,adminOnly,upload.single("thumbnail"),updateBlog )
 
 export default router;

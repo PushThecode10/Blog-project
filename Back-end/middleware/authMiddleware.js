@@ -1,4 +1,3 @@
-// middleware/authMiddleware.js
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
 
@@ -6,23 +5,20 @@ export const protect = async (req, res, next) => {
   try {
     let token;
 
-    // Check for token in headers or cookies
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
-    ) {
-      token = req.headers.authorization.split(" ")[1];
-    } else if (req.cookies.accessToken) {
+    // Get token from cookies OR Authorization header
+    if (req.cookies.accessToken) {
       token = req.cookies.accessToken;
+    } else if (req.headers.authorization?.startsWith("Bearer")) {
+      token = req.headers.authorization.split(" ")[1];
     }
 
     if (!token) {
       return res.status(401).json({
         success: false,
-        message: "Not authorized, no token",
+        message: "Not authorized, no token provided",
       });
     }
-    console.log("Token found:", token);
+
     // Verify token
     const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
 
@@ -35,9 +31,9 @@ export const protect = async (req, res, next) => {
         message: "User not found",
       });
     }
-
     next();
   } catch (error) {
+    console.error("Auth middleware error:", error.message);
     return res.status(401).json({
       success: false,
       message: "Not authorized, token failed",
@@ -51,7 +47,7 @@ export const adminOnly = (req, res, next) => {
   } else {
     return res.status(403).json({
       success: false,
-      message: "Access denied. Admin only.",
+      message: "Access denied. Admin privileges required.",
     });
   }
 };

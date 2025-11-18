@@ -21,6 +21,7 @@ const Adminlogin = () => {
         localStorage.setItem("accessToken", res.data.accessToken);
         localStorage.setItem("refreshToken", res.data.refreshToken);
         localStorage.setItem("role", res.data.user.role); // ✅ store role
+         localStorage.setItem("user", JSON.stringify(res.data.user));
         setMessage("Login successful!");
 
         // Redirect admin to dashboard or home

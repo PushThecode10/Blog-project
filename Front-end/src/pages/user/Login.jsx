@@ -27,10 +27,11 @@ const {fetchUser} = useAuth()
         localStorage.setItem("accessToken", res.data.accessToken);
         localStorage.setItem("refreshToken", res.data.refreshToken);
         localStorage.setItem("role", res.data.role || "user");
-        
+            localStorage.setItem("user", JSON.stringify(res.data.user));
         await fetchUser()
         // ✅ Dispatch Redux login action
          // update Redux auth state
+     
 
         // ✅ Optional success message
         setMessage("Login successful!");
