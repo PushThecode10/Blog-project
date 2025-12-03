@@ -1,13 +1,13 @@
-// App.jsx
-import React, { useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import React from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Helmet } from "react-helmet-async"; 
 import { publicRoutes, userRoutes, adminRoutes } from "./Routes";
-import { AuthProvider, useAuth } from "./Context/AuthProvide";
+import { useAuth } from "./Context/AuthProvide";
 
-// Protected Route Component for Users
+// Rest of your code stays the same
 const UserProtectedRoute = ({ children }) => {
   const { user, loading } = useAuth();
-  
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -15,70 +15,64 @@ const UserProtectedRoute = ({ children }) => {
       </div>
     );
   }
-  
+
   if (!user) {
     return <Navigate to="/login" replace />;
   }
-  
+
   return children;
 };
 
 const AppContent = () => {
-  const { fetchUser } = useAuth();
-  
-  useEffect(() => {
-    fetchUser();
-  }, []);
-  
+  const location = useLocation();
+
+  const getTitle = () => {
+    const route = [...publicRoutes, ...userRoutes, ...adminRoutes].find(
+      (r) => r.path === location.pathname
+    );
+    return route?.title ? `${route.title} | My App` : "My App";
+  };
+
   return (
-    <Routes>
-      {/* Public Routes - Accessible to everyone */}
-      {publicRoutes.map((route, index) => (
-        <Route
-          key={index}
-          path={route.path}
-          element={<route.component />}
-        />
-      ))}
+    <>
 
-      {/* User Routes - Only for logged-in users */}
-      {userRoutes.map((route, index) => (
-        <Route
-          key={index}
-          path={route.path}
-          element={
-            <UserProtectedRoute>
-              <route.component />
-            </UserProtectedRoute>
-          }
-        />
-      ))}
+      <Routes>
+        {publicRoutes.map((route, index) => (
+          <Route key={index} path={route.path} element={<route.component />} />
+        ))}
 
-      {/* Admin Routes - Only for admin users */}
-      {adminRoutes.map((route, index) => (
-        <Route
-          key={index}
-          path={route.path}
-          element={
-            <route.Layout>
-              <route.component />
-            </route.Layout>
-          }
-        />
-      ))}
+        {userRoutes.map((route, index) => (
+          <Route
+            key={index}
+            path={route.path}
+            element={
+              <UserProtectedRoute>
+                <route.component />
+              </UserProtectedRoute>
+            }
+          />
+        ))}
 
-      {/* Catch all route - redirect to home */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {adminRoutes.map((route, index) => (
+          <Route
+            key={index}
+            path={route.path}
+            element={
+              <route.Layout>
+                <route.component />
+              </route.Layout>
+            }
+          />
+        ))}
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 };
 
 const App = () => {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
+  return <AppContent />;
 };
 
 export default App;

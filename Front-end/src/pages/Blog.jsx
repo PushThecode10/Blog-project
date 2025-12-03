@@ -13,6 +13,20 @@ const Blogs = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  // Set document title - THIS IS THE FIX
+  useEffect(() => {
+    document.title = "All Blogs - MyBlogSite";
+    
+    // Optional: Add meta tags
+    let metaDescription = document.querySelector('meta[name="description"]');
+    if (!metaDescription) {
+      metaDescription = document.createElement('meta');
+      metaDescription.name = 'description';
+      document.head.appendChild(metaDescription);
+    }
+    metaDescription.content = "Read all the latest blogs on MyBlogSite. Explore articles on various topics and stay updated with new content.";
+  }, []);
+
   // Fetch all blogs and liked status from backend
   useEffect(() => {
     const fetchData = async () => {
@@ -93,6 +107,7 @@ const Blogs = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <Navbar />
+      {/* REMOVE HELMET COMPLETELY */}
 
       <main className="container mx-auto px-4 py-6 max-w-5xl">
         {/* Header Section */}

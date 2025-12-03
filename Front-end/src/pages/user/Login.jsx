@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
-import { useDispatch } from "react-redux";  // ✅ import Redux
+import { useDispatch } from "react-redux"; // ✅ import Redux
 import { login } from "../../Features/auth/authSlice.js"; // ✅ import login action
 import API from "../../axios.js";
 import { useAuth } from "../../Context/AuthProvide.jsx";
@@ -9,8 +9,8 @@ import { useAuth } from "../../Context/AuthProvide.jsx";
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch(); // ✅ get dispatch function
-const {fetchUser} = useAuth()
-  
+  const { fetchUser } = useAuth();
+
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -23,15 +23,14 @@ const {fetchUser} = useAuth()
 
       if (res.data.success) {
         // ✅ Save tokens
-         dispatch(login(res.data.user));
+        dispatch(login(res.data.user));
         localStorage.setItem("accessToken", res.data.accessToken);
         localStorage.setItem("refreshToken", res.data.refreshToken);
         localStorage.setItem("role", res.data.role || "user");
-            localStorage.setItem("user", JSON.stringify(res.data.user));
-        await fetchUser()
+        localStorage.setItem("user", JSON.stringify(res.data.user));
+        await fetchUser();
         // ✅ Dispatch Redux login action
-         // update Redux auth state
-     
+        // update Redux auth state
 
         // ✅ Optional success message
         setMessage("Login successful!");
@@ -107,7 +106,9 @@ const {fetchUser} = useAuth()
           {message && (
             <p
               className={`text-center text-sm ${
-                message.includes("successful") ? "text-green-600" : "text-red-500"
+                message.includes("successful")
+                  ? "text-green-600"
+                  : "text-red-500"
               }`}
             >
               {message}

@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import Navbar from "../../components/Navbar";
 import API from "../../axios";
+import { Helmet } from "react-helmet-async";
 
 const LikedBlogs = () => {
   const [likedBlogs, setLikedBlogs] = useState([]);
@@ -83,6 +84,12 @@ const LikedBlogs = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       <Navbar />
+      <Helmet>
+        <title>Your Liked Blogs</title>
+        <meta name="description" content="Browse and manage the blogs you've liked on MyBlogSite. Discover your favorite articles all in one place." />
+        <meta name="keywords" content="liked blogs, favorite articles, myblogsite, saved blogs" />
+        <meta name="author" content="MyBlogSite" />
+      </Helmet>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-12 mt-10">

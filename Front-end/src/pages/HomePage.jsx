@@ -4,6 +4,7 @@ import API from '../axios.js';
 import { Link, useNavigate } from 'react-router-dom';
 import { AiFillLike, AiOutlineLike } from 'react-icons/ai';
 import { useAuth } from '../Context/AuthProvide.jsx';
+import { Helmet } from 'react-helmet-async';
 
 const HomePage = () => {
   const [blogs, setBlogs] = useState([]);
@@ -101,6 +102,12 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
       <Navbar />
+      <Helmet>
+        <title>Home - MyBlogSite</title>
+        <meta name="description" content="Welcome to MyBlogSite. Discover amazing stories, insights, and ideas from talented writers around the world." />
+        <meta name="keywords" content="blog, stories, articles, myblogsite, insights, ideas" />
+        <meta name="author" content="MyBlogSite" />
+      </Helmet>
 
       {/* Hero Section */}
       <div className="relative bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 text-white py-24 mt-16 overflow-hidden">
