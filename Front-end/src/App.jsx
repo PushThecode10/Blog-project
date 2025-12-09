@@ -35,7 +35,7 @@ const AppContent = () => {
 
   return (
     <>
-
+  {/* this is Routes */}
       <Routes>
         {publicRoutes.map((route, index) => (
           <Route key={index} path={route.path} element={<route.component />} />
