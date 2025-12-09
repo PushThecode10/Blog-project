@@ -26,7 +26,7 @@ const Navbar = () => {
       onSearch(query);
     }
   };
-
+ // handlelogout
   const handleLogout = async () => {
     dispatch(reduxLogout());
     contextLogout();
