@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import User from "../models/userModel.js";
 import { generateToken } from "../utils/token.js";
+import {Redis} from '../server.js'
 
 // --------------------
 // ✅ Register User (role always 'user')
@@ -46,7 +47,9 @@ export const loginUser = async (req, res) => {
 
     const accessToken = generateToken(user._id, process.env.ACCESS_TOKEN_SECRET, "15m");
     const refreshToken = generateToken(user._id, process.env.REFRESH_TOKEN_SECRET, "7d");
-
+     await Redis.set(
+      `refreshToken:${user._id}`, refreshToken, { EX: 7 * 24 * 60 * 60 }
+     )
     // Set cookies
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
@@ -95,6 +98,9 @@ export const loginAdmin = async (req, res) => {
     const accessToken = generateToken(admin._id, process.env.ACCESS_TOKEN_SECRET, "15m");
     const refreshToken = generateToken(admin._id, process.env.REFRESH_TOKEN_SECRET, "7d");
 
+    await Redis.set(
+      `refreshToken:${admin._id}`, refreshToken, { EX: 7 * 24 * 60 * 60 } 
+    )
     // Set cookies
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
@@ -125,91 +131,89 @@ export const loginAdmin = async (req, res) => {
 // --------------------
 // ✅ Refresh Access Token
 // --------------------
+
 export const refreshAccessToken = async (req, res) => {
   try {
     const { refreshToken } = req.cookies;
-    
-    if (!refreshToken) {
-      return res.status(401).json({ 
-        success: false, 
-        message: "No refresh token provided" 
+
+    if (!refreshToken)
+      return res.status(401).json({ success: false, message: "No refresh token provided" });
+
+    // Decode refresh token
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+    // Fetch stored refresh token from Redis
+    const storedToken = await redis.get(`refresh:${decoded.id}`);
+
+    if (!storedToken || storedToken !== refreshToken) {
+      return res.status(403).json({
+        success: false,
+        message: "Invalid or expired refresh token",
       });
     }
 
-    jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET, async (err, decoded) => {
-      if (err) {
-        return res.status(403).json({ 
-          success: false, 
-          message: "Invalid or expired refresh token" 
-        });
-      }
+    // Generate new access token
+    const newAccessToken = generateToken(decoded.id, process.env.ACCESS_TOKEN_SECRET, "15m");
 
-      const user = await User.findById(decoded.id);
-      if (!user) {
-        return res.status(404).json({ 
-          success: false, 
-          message: "User not found" 
-        });
-      }
-
-      // Generate new access token
-      const newAccessToken = generateToken(
-        user._id, 
-        process.env.ACCESS_TOKEN_SECRET, 
-        "15m"
-      );
-
-      // Set new access token cookie
-      res.cookie("accessToken", newAccessToken, {
-        httpOnly: true,
-        sameSite: "strict",
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 15 * 60 * 1000,
-      });
-
-      res.status(200).json({ 
-        success: true, 
-        accessToken: newAccessToken,
-        message: "Access token refreshed successfully"
-      });
+    // Set cookie
+    res.cookie("accessToken", newAccessToken, {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 15 * 60 * 1000,
     });
-  } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: error.message 
+
+    res.json({
+      success: true,
+      accessToken: newAccessToken,
+      message: "Access token refreshed"
     });
-  }
+
+  } catch (err) {
+    return res.status(403).json({
+      success: false,
+      message: "Invalid refresh token",
+    });
+}
 };
-
 // --------------------
 // ✅ Logout (both roles)
 // --------------------
+
 export const logoutUser = async (req, res) => {
   try {
+    // user ID चाहिन्छ
+    const userId = req.user?.id;
+
+    // If logged-in user exists → remove refresh token from Redis
+    if (userId) {
+      await redis.del(`refresh:${userId}`);
+    }
+
+    // Clear cookies
     res.clearCookie("accessToken", {
       httpOnly: true,
       sameSite: "strict",
       secure: process.env.NODE_ENV === "production",
     });
-    
+
     res.clearCookie("refreshToken", {
       httpOnly: true,
       sameSite: "strict",
       secure: process.env.NODE_ENV === "production",
     });
-    
-    res.status(200).json({ 
-      success: true, 
-      message: "Logged out successfully" 
+
+    res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
     });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      message: error.message 
+    res.status(500).json({
+      success: false,
+      message: error.message,
     });
   }
 };
-
 // --------------------
 // ✅ Get Me (for protected routes)
 // --------------------
