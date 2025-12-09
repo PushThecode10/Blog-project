@@ -3,7 +3,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 // 🔥 Read user safely from localStorage
 let savedUser = localStorage.getItem("user");
-
+//initial satate
 const initialState = {
   isAuthenticated: !!localStorage.getItem("accessToken"),
   user:
