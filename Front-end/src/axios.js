@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api",
+  baseURL: "https://blog-project-back-end-64q7.onrender.com",
   withCredentials: true, // Allows sending cookies
 });
 
