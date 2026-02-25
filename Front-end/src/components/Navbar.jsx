@@ -3,7 +3,7 @@ import logo from "../assets/logo.svg";
 import { NavLink, useNavigate } from "react-router-dom";
 import { FaUser, FaBars, FaTimes, FaHeart } from "react-icons/fa";
 import { useAuth } from "../Context/AuthProvide";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { logout as reduxLogout } from "../Features/auth/authSlice";
 
 const Navbar = () => {
@@ -13,6 +13,7 @@ const Navbar = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const user1 =useSelector((items)=>items.auth) 
 
   const toggleDropdown = () => setDropdownOpen(!dropdownOpen);
   const toggleMobileMenu = () => setMobileMenuOpen(!mobileMenuOpen);

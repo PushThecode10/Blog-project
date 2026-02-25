@@ -45,7 +45,4 @@ export const adminRoutes = [
   { path: "/addBlog/:id", component: BlogForm, Layout: PrivateRoute },
   { path: "/addCatagory", component: AddCategory, Layout: PrivateRoute },
   { path: "/allBlogs", component: TotalBlogs, Layout: PrivateRoute },
-  
- 
-  
 ];

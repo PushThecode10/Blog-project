@@ -7,14 +7,19 @@ const categorySchema = new mongoose.Schema(
       required: [true, "Category name is required"],
       unique: true,
       trim: true,
+      index: true,
     },
     description: {
       type: String,
       default: "",
+      trim: true,
     },
   },
   { timestamps: true }
 );
 
-const Category = mongoose.model("Category", categorySchema);
+// ✅ Prevent model overwrite & memory leak
+const Category =
+  mongoose.models.Category || mongoose.model("Category", categorySchema);
+
 export default Category;
